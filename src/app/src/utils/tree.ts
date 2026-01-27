@@ -3,10 +3,48 @@ import {
   TreeStatus,
   type DraftItem,
   type TreeItem,
+  type I18nConfig,
 } from '../types'
 import type { RouteLocationNormalized } from 'vue-router'
 import type { BaseItem } from '../types/item'
 import { getFileExtension, parseName } from './file'
+
+export function getLocaleFromFsPath(fsPath: string, i18nConfig?: I18nConfig): string | null {
+  if (!i18nConfig?.locales?.length) {
+    return null
+  }
+
+  const firstSegment = fsPath.split('/').filter(Boolean)[0]
+  if (firstSegment && i18nConfig.locales.includes(firstSegment)) {
+    return firstSegment
+  }
+
+  return null
+}
+
+export function normalizeRouteForI18n(routePath: string, i18nConfig?: I18nConfig): string[] {
+  if (!i18nConfig || i18nConfig.strategy !== 'prefix_except_default') {
+    return [routePath]
+  }
+
+  const { defaultLocale, locales } = i18nConfig
+  if (!defaultLocale || !locales?.length) {
+    return [routePath]
+  }
+
+  const pathSegments = routePath.split('/').filter(Boolean)
+  const firstSegment = pathSegments[0]
+
+  if (firstSegment && locales.includes(firstSegment)) {
+    if (firstSegment === defaultLocale) {
+      const pathWithoutLocale = '/' + pathSegments.slice(1).join('/')
+      return [pathWithoutLocale || '/']
+    }
+    return [routePath]
+  }
+
+  return [routePath, `/${defaultLocale}${routePath === '/' ? '' : routePath}`]
+}
 
 export const COLOR_STATUS_MAP: { [key in TreeStatus]?: string } = {
   [TreeStatus.Created]: 'green',
@@ -249,14 +287,16 @@ export function findParentFromFsPath(tree: TreeItem[], fsPath: string): TreeItem
   return null
 }
 
-export function findItemFromRoute(tree: TreeItem[], route: RouteLocationNormalized): TreeItem | null {
+export function findItemFromRoute(tree: TreeItem[], route: RouteLocationNormalized, i18nConfig?: I18nConfig): TreeItem | null {
+  const possiblePaths = normalizeRouteForI18n(route.path, i18nConfig)
+
   for (const item of tree) {
-    if (item.routePath === route.path) {
+    if (item.routePath && possiblePaths.includes(item.routePath)) {
       return item
     }
 
     if (item.type === 'directory' && item.children) {
-      const foundInChildren = findItemFromRoute(item.children, route)
+      const foundInChildren = findItemFromRoute(item.children, route, i18nConfig)
       if (foundInChildren) {
         return foundInChildren
       }

@@ -1,0 +1,10 @@
+{
+  "name": "nuxt-studio",
+  "configKey": "studio",
+  "version": "1.2.0",
+  "docs": "https://content.nuxt.com/studio",
+  "builder": {
+    "@nuxt/module-builder": "1.0.2",
+    "unbuild": "3.6.1"
+  }
+}

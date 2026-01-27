@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildTree, findParentFromFsPath, findItemFromRoute, findItemFromFsPath, findDescendantsFileItemsFromFsPath, getTreeStatus } from '../../../src/utils/tree'
+import { buildTree, findParentFromFsPath, findItemFromRoute, findItemFromFsPath, findDescendantsFileItemsFromFsPath, getTreeStatus, normalizeRouteForI18n, getLocaleFromFsPath } from '../../../src/utils/tree'
 import { tree } from '../../../test/mocks/tree'
 import type { TreeItem } from '../../../src/types/tree'
 import { dbItemsList, languagePrefixedDbItemsList, nestedDbItemsList } from '../../../test/mocks/database'
@@ -1015,5 +1015,160 @@ describe('findDescendantsFileItemsFromFsPath', () => {
 
     expect(descendants).toHaveLength(1)
     expect(descendants[0].fsPath).toBe('1.getting-started/1.advanced/1.studio.md')
+  })
+})
+
+describe('getLocaleFromFsPath', () => {
+  const i18nConfig = {
+    strategy: 'prefix_except_default' as const,
+    defaultLocale: 'en',
+    locales: ['en', 'fr', 'de'],
+  }
+
+  it('returns locale when fsPath starts with a known locale', () => {
+    expect(getLocaleFromFsPath('en/index.md', i18nConfig)).toBe('en')
+    expect(getLocaleFromFsPath('fr/about.md', i18nConfig)).toBe('fr')
+    expect(getLocaleFromFsPath('de/docs/intro.md', i18nConfig)).toBe('de')
+  })
+
+  it('returns null when fsPath does not start with a known locale', () => {
+    expect(getLocaleFromFsPath('index.md', i18nConfig)).toBeNull()
+    expect(getLocaleFromFsPath('docs/intro.md', i18nConfig)).toBeNull()
+    expect(getLocaleFromFsPath('es/index.md', i18nConfig)).toBeNull()
+  })
+
+  it('returns null when i18nConfig is undefined', () => {
+    expect(getLocaleFromFsPath('en/index.md', undefined)).toBeNull()
+  })
+
+  it('returns null when locales array is empty', () => {
+    expect(getLocaleFromFsPath('en/index.md', { ...i18nConfig, locales: [] })).toBeNull()
+  })
+})
+
+describe('normalizeRouteForI18n', () => {
+  const i18nConfig = {
+    strategy: 'prefix_except_default' as const,
+    defaultLocale: 'en',
+    locales: ['en', 'fr', 'de'],
+  }
+
+  it('returns original path when i18nConfig is undefined', () => {
+    expect(normalizeRouteForI18n('/about', undefined)).toEqual(['/about'])
+  })
+
+  it('returns original path when strategy is not prefix_except_default', () => {
+    const prefixConfig = { ...i18nConfig, strategy: 'prefix' as const }
+    expect(normalizeRouteForI18n('/about', prefixConfig)).toEqual(['/about'])
+  })
+
+  it('returns path without locale when route has default locale prefix', () => {
+    expect(normalizeRouteForI18n('/en/about', i18nConfig)).toEqual(['/about'])
+    expect(normalizeRouteForI18n('/en', i18nConfig)).toEqual(['/'])
+    expect(normalizeRouteForI18n('/en/docs/intro', i18nConfig)).toEqual(['/docs/intro'])
+  })
+
+  it('returns original path when route has non-default locale prefix', () => {
+    expect(normalizeRouteForI18n('/fr/about', i18nConfig)).toEqual(['/fr/about'])
+    expect(normalizeRouteForI18n('/de/docs/intro', i18nConfig)).toEqual(['/de/docs/intro'])
+  })
+
+  it('returns both original and default-locale-prefixed paths for unprefixed routes', () => {
+    expect(normalizeRouteForI18n('/about', i18nConfig)).toEqual(['/about', '/en/about'])
+    expect(normalizeRouteForI18n('/', i18nConfig)).toEqual(['/', '/en'])
+    expect(normalizeRouteForI18n('/docs/intro', i18nConfig)).toEqual(['/docs/intro', '/en/docs/intro'])
+  })
+})
+
+describe('findItemFromRoute with i18n', () => {
+  const mockRoute = (path: string) => ({ path }) as RouteLocationNormalized
+
+  const i18nConfig = {
+    strategy: 'prefix_except_default' as const,
+    defaultLocale: 'en',
+    locales: ['en', 'fr', 'de'],
+  }
+
+  const i18nTree: TreeItem[] = [
+    {
+      name: 'en',
+      fsPath: 'en',
+      type: 'directory',
+      prefix: null,
+      children: [
+        {
+          name: 'home',
+          fsPath: 'en/index.md',
+          type: 'file',
+          routePath: '/',
+          prefix: null,
+        },
+        {
+          name: 'about',
+          fsPath: 'en/about.md',
+          type: 'file',
+          routePath: '/about',
+          prefix: null,
+        },
+      ],
+    },
+    {
+      name: 'fr',
+      fsPath: 'fr',
+      type: 'directory',
+      prefix: null,
+      children: [
+        {
+          name: 'home',
+          fsPath: 'fr/index.md',
+          type: 'file',
+          routePath: '/fr',
+          prefix: null,
+        },
+        {
+          name: 'about',
+          fsPath: 'fr/about.md',
+          type: 'file',
+          routePath: '/fr/about',
+          prefix: null,
+        },
+      ],
+    },
+  ]
+
+  it('finds default locale content when navigating to unprefixed route', () => {
+    const item = findItemFromRoute(i18nTree, mockRoute('/'), i18nConfig)
+    expect(item).toBeDefined()
+    expect(item?.fsPath).toBe('en/index.md')
+  })
+
+  it('finds default locale content when navigating to prefixed default locale route', () => {
+    const item = findItemFromRoute(i18nTree, mockRoute('/en'), i18nConfig)
+    expect(item).toBeDefined()
+    expect(item?.fsPath).toBe('en/index.md')
+  })
+
+  it('finds non-default locale content when navigating to prefixed route', () => {
+    const item = findItemFromRoute(i18nTree, mockRoute('/fr'), i18nConfig)
+    expect(item).toBeDefined()
+    expect(item?.fsPath).toBe('fr/index.md')
+  })
+
+  it('finds nested default locale content with unprefixed route', () => {
+    const item = findItemFromRoute(i18nTree, mockRoute('/about'), i18nConfig)
+    expect(item).toBeDefined()
+    expect(item?.fsPath).toBe('en/about.md')
+  })
+
+  it('finds nested non-default locale content with prefixed route', () => {
+    const item = findItemFromRoute(i18nTree, mockRoute('/fr/about'), i18nConfig)
+    expect(item).toBeDefined()
+    expect(item?.fsPath).toBe('fr/about.md')
+  })
+
+  it('works without i18n config (backward compatible)', () => {
+    const item = findItemFromRoute(i18nTree, mockRoute('/'))
+    expect(item).toBeDefined()
+    expect(item?.fsPath).toBe('en/index.md')
   })
 })

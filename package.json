@@ -78,7 +78,6 @@
     "idb-keyval": "^6.2.2",
     "minimark": "^0.2.0",
     "modern-monaco": "^0.3.7",
-    "nuxt-studio": "workspace:*",
     "ofetch": "^1.5.1",
     "release-it": "^19.2.3",
     "tailwindcss": "^4.1.18",

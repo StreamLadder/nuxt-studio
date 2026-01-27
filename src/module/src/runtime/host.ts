@@ -5,7 +5,7 @@ import type { ContentDatabaseAdapter } from '../types/content'
 import { getCollectionByFilePath, generateIdFromFsPath, generateRecordDeletion, generateRecordInsert, generateFsPathFromId, getCollectionById } from './utils/collection'
 import { applyCollectionSchema, isDocumentMatchingContent, generateDocumentFromContent, generateContentFromDocument, areDocumentsEqual, pickReservedKeysFromDocument, removeReservedKeysFromDocument, sanitizeDocumentTree } from './utils/document'
 import { getHostStyles, getSidebarWidth, adjustFixedElements } from './utils/sidebar'
-import type { StudioHost, StudioUser, DatabaseItem, MediaItem, Repository } from 'nuxt-studio/app'
+import type { StudioHost, StudioUser, DatabaseItem, MediaItem, Repository, I18nConfig, I18nStrategy } from 'nuxt-studio/app'
 import type { RouteLocationNormalized, Router } from 'vue-router'
 // @ts-expect-error queryCollection is not defined in .nuxt/imports.d.ts
 import { clearError, getAppManifest, queryCollection, queryCollectionItemSurroundings, queryCollectionNavigation, queryCollectionSearchSections, useRuntimeConfig } from '#imports'
@@ -20,6 +20,29 @@ const serviceWorkerVersion = 'v0.0.3'
 
 function getLocalColorMode(): 'light' | 'dark' {
   return document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+}
+
+function detectI18nConfig(): I18nConfig | undefined {
+  const runtimeConfig = useRuntimeConfig()
+  const i18nPublicConfig = runtimeConfig.public?.i18n as Record<string, unknown> | undefined
+
+  if (!i18nPublicConfig) {
+    return undefined
+  }
+
+  const strategy = i18nPublicConfig.strategy as I18nStrategy | undefined
+  const defaultLocale = i18nPublicConfig.defaultLocale as string | undefined
+  const locales = i18nPublicConfig.locales as Array<string | { code: string }> | undefined
+
+  if (!strategy || !defaultLocale || !locales) {
+    return undefined
+  }
+
+  return {
+    strategy,
+    defaultLocale,
+    locales: locales.map(locale => typeof locale === 'string' ? locale : locale.code),
+  }
 }
 
 export function useStudioHost(user: StudioUser, repository: Repository): StudioHost {
@@ -74,6 +97,7 @@ export function useStudioHost(user: StudioUser, repository: Repository): StudioH
       getComponents: () => meta.components.value,
       defaultLocale: useRuntimeConfig().public.studio.i18n?.defaultLocale || 'en',
       getHighlightTheme: () => meta.highlightTheme.value!,
+      i18n: detectI18nConfig(),
     },
     on: {
       routeChange: (fn: (to: RouteLocationNormalized, from: RouteLocationNormalized) => void) => {

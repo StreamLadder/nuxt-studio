@@ -21,12 +21,21 @@ export * from './media'
 export * from './content'
 export * from './form'
 
+export type I18nStrategy = 'no_prefix' | 'prefix_except_default' | 'prefix' | 'prefix_and_default'
+
+export interface I18nConfig {
+  strategy?: I18nStrategy
+  defaultLocale?: string
+  locales?: string[]
+}
+
 export interface StudioHost {
   meta: {
     dev: boolean
     getComponents: () => ComponentMeta[]
     defaultLocale: string
     getHighlightTheme: () => SyntaxHighlightTheme
+    i18n?: I18nConfig
   }
   on: {
     routeChange: (fn: (to: RouteLocationNormalized, from: RouteLocationNormalized) => void) => void
