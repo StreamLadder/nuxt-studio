@@ -23,27 +23,37 @@ export function getLocaleFromFsPath(fsPath: string, i18nConfig?: I18nConfig): st
 }
 
 export function normalizeRouteForI18n(routePath: string, i18nConfig?: I18nConfig): string[] {
+  console.log('[Studio i18n] normalizeRouteForI18n called with routePath:', routePath, 'i18nConfig:', i18nConfig)
+
   if (!i18nConfig || i18nConfig.strategy !== 'prefix_except_default') {
+    console.log('[Studio i18n] No i18n config or strategy is not prefix_except_default, returning original path')
     return [routePath]
   }
 
   const { defaultLocale, locales } = i18nConfig
   if (!defaultLocale || !locales?.length) {
+    console.log('[Studio i18n] Missing defaultLocale or locales, returning original path')
     return [routePath]
   }
 
   const pathSegments = routePath.split('/').filter(Boolean)
   const firstSegment = pathSegments[0]
 
+  console.log('[Studio i18n] Path segments:', pathSegments, 'firstSegment:', firstSegment)
+
   if (firstSegment && locales.includes(firstSegment)) {
     if (firstSegment === defaultLocale) {
       const pathWithoutLocale = '/' + pathSegments.slice(1).join('/')
+      console.log('[Studio i18n] Route has default locale prefix, stripping it. Result:', [pathWithoutLocale || '/'])
       return [pathWithoutLocale || '/']
     }
+    console.log('[Studio i18n] Route has non-default locale prefix, keeping as-is:', [routePath])
     return [routePath]
   }
 
-  return [routePath, `/${defaultLocale}${routePath === '/' ? '' : routePath}`]
+  const result = [routePath, `/${defaultLocale}${routePath === '/' ? '' : routePath}`]
+  console.log('[Studio i18n] Route has no locale prefix, returning both variants:', result)
+  return result
 }
 
 export const COLOR_STATUS_MAP: { [key in TreeStatus]?: string } = {
@@ -290,8 +300,11 @@ export function findParentFromFsPath(tree: TreeItem[], fsPath: string): TreeItem
 export function findItemFromRoute(tree: TreeItem[], route: RouteLocationNormalized, i18nConfig?: I18nConfig): TreeItem | null {
   const possiblePaths = normalizeRouteForI18n(route.path, i18nConfig)
 
+  console.log('[Studio i18n] findItemFromRoute called with route.path:', route.path, 'possiblePaths:', possiblePaths)
+
   for (const item of tree) {
     if (item.routePath && possiblePaths.includes(item.routePath)) {
+      console.log('[Studio i18n] Found matching item:', item.fsPath, 'routePath:', item.routePath)
       return item
     }
 
@@ -303,6 +316,7 @@ export function findItemFromRoute(tree: TreeItem[], route: RouteLocationNormaliz
     }
   }
 
+  console.log('[Studio i18n] No matching item found for route:', route.path)
   return null
 }
 

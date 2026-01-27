@@ -17,20 +17,26 @@ function getLocalColorMode() {
 function detectI18nConfig() {
   const runtimeConfig = useRuntimeConfig();
   const i18nPublicConfig = runtimeConfig.public?.i18n;
+  console.log("[Studio i18n] Detecting i18n config from runtimeConfig.public.i18n:", i18nPublicConfig);
   if (!i18nPublicConfig) {
+    console.log("[Studio i18n] No i18n config found in runtimeConfig.public.i18n");
     return void 0;
   }
   const strategy = i18nPublicConfig.strategy;
   const defaultLocale = i18nPublicConfig.defaultLocale;
   const locales = i18nPublicConfig.locales;
+  console.log("[Studio i18n] Extracted values - strategy:", strategy, "defaultLocale:", defaultLocale, "locales:", locales);
   if (!strategy || !defaultLocale || !locales) {
+    console.log("[Studio i18n] Missing required i18n config values, returning undefined");
     return void 0;
   }
-  return {
+  const config = {
     strategy,
     defaultLocale,
     locales: locales.map((locale) => typeof locale === "string" ? locale : locale.code)
   };
+  console.log("[Studio i18n] Final i18n config:", config);
+  return config;
 }
 export function useStudioHost(user, repository) {
   let localDatabaseAdapter = null;
