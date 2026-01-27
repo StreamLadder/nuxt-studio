@@ -141,6 +141,12 @@ interface ModuleOptions {
          * @default 'en'
          */
         defaultLocale?: string;
+        /**
+         * The i18n routing strategy used by @nuxtjs/i18n.
+         * Set this if you're using @nuxtjs/i18n and Studio doesn't auto-detect the strategy.
+         * @default undefined (auto-detect from @nuxtjs/i18n or assume 'prefix_except_default')
+         */
+        strategy?: 'no_prefix' | 'prefix_except_default' | 'prefix' | 'prefix_and_default';
     };
     /**
      * Meta options.

@@ -22,13 +22,22 @@ function detectI18nConfig() {
     console.log("[Studio i18n] No i18n config found in runtimeConfig.public.i18n");
     return void 0;
   }
-  const strategy = i18nPublicConfig.strategy;
   const defaultLocale = i18nPublicConfig.defaultLocale;
   const locales = i18nPublicConfig.locales;
-  console.log("[Studio i18n] Extracted values - strategy:", strategy, "defaultLocale:", defaultLocale, "locales:", locales);
-  if (!strategy || !defaultLocale || !locales) {
-    console.log("[Studio i18n] Missing required i18n config values, returning undefined");
+  console.log("[Studio i18n] Extracted values - defaultLocale:", defaultLocale, "locales:", locales);
+  if (!defaultLocale || !locales) {
+    console.log("[Studio i18n] Missing required i18n config values (defaultLocale or locales), returning undefined");
     return void 0;
+  }
+  const studioI18nConfig = runtimeConfig.public?.studio?.i18n;
+  let strategy = i18nPublicConfig.strategy;
+  if (!strategy && studioI18nConfig?.strategy) {
+    strategy = studioI18nConfig.strategy;
+    console.log("[Studio i18n] Using strategy from studio.i18n config:", strategy);
+  }
+  if (!strategy) {
+    strategy = "prefix_except_default";
+    console.log("[Studio i18n] Strategy not found in runtime config, defaulting to:", strategy);
   }
   const config = {
     strategy,

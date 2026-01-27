@@ -47,6 +47,15 @@ export { }
 
 declare module '@tiptap/vue-3' {
     interface Commands<ReturnType> {
+        videoPicker: {
+            insertVideoPicker: () => ReturnType;
+        };
+    }
+}
+
+
+declare module '@tiptap/vue-3' {
+    interface Commands<ReturnType> {
         imagePicker: {
             insertImagePicker: () => ReturnType;
         };
@@ -58,15 +67,6 @@ declare module '@tiptap/core' {
     interface Commands<ReturnType> {
         Element: {
             setElement: (tag: string, slot?: string) => ReturnType;
-        };
-    }
-}
-
-
-declare module '@tiptap/vue-3' {
-    interface Commands<ReturnType> {
-        videoPicker: {
-            insertVideoPicker: () => ReturnType;
         };
     }
 }
@@ -86,19 +86,11 @@ declare module '@tiptap/core' {
 
 declare module '@tiptap/core' {
     interface Commands<ReturnType> {
-        SpanStyle: {
+        InlineElement: {
             /**
-             * Wrap selection (or insert empty) with span-style node
+             * Toggle a InlineElement
              */
-            setSpanStyle: (attributes?: SpanStyleAttrs) => ReturnType;
-            /**
-             * Update attributes on current span-style node
-             */
-            updateSpanStyle: (attributes?: SpanStyleAttrs) => ReturnType;
-            /**
-             * Remove the current span-style node (unwrap content)
-             */
-            unsetSpanStyle: () => ReturnType;
+            setInlineElement: (tag: string) => ReturnType;
         };
     }
 }
@@ -126,11 +118,19 @@ declare module '@tiptap/core' {
 
 declare module '@tiptap/core' {
     interface Commands<ReturnType> {
-        InlineElement: {
+        SpanStyle: {
             /**
-             * Toggle a InlineElement
+             * Wrap selection (or insert empty) with span-style node
              */
-            setInlineElement: (tag: string) => ReturnType;
+            setSpanStyle: (attributes?: SpanStyleAttrs) => ReturnType;
+            /**
+             * Update attributes on current span-style node
+             */
+            updateSpanStyle: (attributes?: SpanStyleAttrs) => ReturnType;
+            /**
+             * Remove the current span-style node (unwrap content)
+             */
+            unsetSpanStyle: () => ReturnType;
         };
     }
 }
