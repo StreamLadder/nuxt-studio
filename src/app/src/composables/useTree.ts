@@ -71,20 +71,16 @@ export const useTree = (type: StudioFeature, host: StudioHost, draft: ReturnType
   }
 
   async function selectByRoute(route: RouteLocationNormalized) {
-    console.log('[Studio i18n] selectByRoute called with route:', route.path, 'host.meta.i18n:', host.meta.i18n)
     const item = findItemFromRoute(tree.value, route, host.meta.i18n)
 
     if (!item) {
-      console.log('[Studio i18n] selectByRoute: No item found for route:', route.path)
       return
     }
 
     if (item.fsPath === currentItem.value.fsPath) {
-      console.log('[Studio i18n] selectByRoute: Item already selected:', item.fsPath)
       return
     }
 
-    console.log('[Studio i18n] selectByRoute: Selecting item:', item.fsPath)
     await select(item)
   }
 

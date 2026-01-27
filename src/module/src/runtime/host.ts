@@ -26,20 +26,14 @@ function detectI18nConfig(): I18nConfig | undefined {
   const runtimeConfig = useRuntimeConfig()
   const i18nPublicConfig = runtimeConfig.public?.i18n as Record<string, unknown> | undefined
 
-  console.log('[Studio i18n] Detecting i18n config from runtimeConfig.public.i18n:', i18nPublicConfig)
-
   if (!i18nPublicConfig) {
-    console.log('[Studio i18n] No i18n config found in runtimeConfig.public.i18n')
     return undefined
   }
 
   const defaultLocale = i18nPublicConfig.defaultLocale as string | undefined
   const locales = i18nPublicConfig.locales as Array<string | { code: string }> | undefined
 
-  console.log('[Studio i18n] Extracted values - defaultLocale:', defaultLocale, 'locales:', locales)
-
   if (!defaultLocale || !locales) {
-    console.log('[Studio i18n] Missing required i18n config values (defaultLocale or locales), returning undefined')
     return undefined
   }
 
@@ -49,13 +43,10 @@ function detectI18nConfig(): I18nConfig | undefined {
 
   if (!strategy && studioI18nConfig?.strategy) {
     strategy = studioI18nConfig.strategy as I18nStrategy
-    console.log('[Studio i18n] Using strategy from studio.i18n config:', strategy)
   }
 
   if (!strategy) {
-    // Default to prefix_except_default as it's the most common strategy causing routing issues
-    strategy = 'prefix_except_default'
-    console.log('[Studio i18n] Strategy not found in runtime config, defaulting to:', strategy)
+    return undefined
   }
 
   const config = {
@@ -64,7 +55,6 @@ function detectI18nConfig(): I18nConfig | undefined {
     locales: locales.map(locale => typeof locale === 'string' ? locale : locale.code),
   }
 
-  console.log('[Studio i18n] Final i18n config:', config)
   return config
 }
 
