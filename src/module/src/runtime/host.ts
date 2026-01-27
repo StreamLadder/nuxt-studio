@@ -5,7 +5,7 @@ import type { ContentDatabaseAdapter } from '../types/content'
 import { getCollectionByFilePath, generateIdFromFsPath, generateRecordDeletion, generateRecordInsert, generateFsPathFromId, getCollectionById } from './utils/collection'
 import { applyCollectionSchema, isDocumentMatchingContent, generateDocumentFromContent, generateContentFromDocument, areDocumentsEqual, pickReservedKeysFromDocument, removeReservedKeysFromDocument, sanitizeDocumentTree } from './utils/document'
 import { getHostStyles, getSidebarWidth, adjustFixedElements } from './utils/sidebar'
-import type { StudioHost, StudioUser, DatabaseItem, MediaItem, Repository, I18nConfig, I18nStrategy } from 'nuxt-studio/app'
+import type { StudioHost, StudioUser, DatabaseItem, MediaItem, Repository, ContentRoutingConfig } from 'nuxt-studio/app'
 import type { RouteLocationNormalized, Router } from 'vue-router'
 // @ts-expect-error queryCollection is not defined in .nuxt/imports.d.ts
 import { clearError, getAppManifest, queryCollection, queryCollectionItemSurroundings, queryCollectionNavigation, queryCollectionSearchSections, useRuntimeConfig } from '#imports'
@@ -22,40 +22,19 @@ function getLocalColorMode(): 'light' | 'dark' {
   return document.documentElement.classList.contains('dark') ? 'dark' : 'light'
 }
 
-function detectI18nConfig(): I18nConfig | undefined {
+function detectContentRoutingConfig(): ContentRoutingConfig | undefined {
   const runtimeConfig = useRuntimeConfig()
-  const i18nPublicConfig = runtimeConfig.public?.i18n as Record<string, unknown> | undefined
+  const studioRouting = runtimeConfig.public.studio.content?.routing
 
-  if (!i18nPublicConfig) {
+  if (!studioRouting?.strategy) {
     return undefined
   }
 
-  const defaultLocale = i18nPublicConfig.defaultLocale as string | undefined
-  const locales = i18nPublicConfig.locales as Array<string | { code: string }> | undefined
-
-  if (!defaultLocale || !locales) {
-    return undefined
+  return {
+    strategy: studioRouting.strategy,
+    defaultLocale: studioRouting.defaultLocale,
+    locales: studioRouting.locales,
   }
-
-  // Strategy is not exposed in @nuxtjs/i18n runtime config, check studio config or default to prefix_except_default
-  const studioI18nConfig = runtimeConfig.public?.studio?.i18n as Record<string, unknown> | undefined
-  let strategy = i18nPublicConfig.strategy as I18nStrategy | undefined
-
-  if (!strategy && studioI18nConfig?.strategy) {
-    strategy = studioI18nConfig.strategy as I18nStrategy
-  }
-
-  if (!strategy) {
-    return undefined
-  }
-
-  const config = {
-    strategy,
-    defaultLocale,
-    locales: locales.map(locale => typeof locale === 'string' ? locale : locale.code),
-  }
-
-  return config
 }
 
 export function useStudioHost(user: StudioUser, repository: Repository): StudioHost {
@@ -110,7 +89,7 @@ export function useStudioHost(user: StudioUser, repository: Repository): StudioH
       getComponents: () => meta.components.value,
       defaultLocale: useRuntimeConfig().public.studio.i18n?.defaultLocale || 'en',
       getHighlightTheme: () => meta.highlightTheme.value!,
-      i18n: detectI18nConfig(),
+      contentRouting: detectContentRoutingConfig(),
     },
     on: {
       routeChange: (fn: (to: RouteLocationNormalized, from: RouteLocationNormalized) => void) => {

@@ -71,13 +71,9 @@ export const useTree = (type: StudioFeature, host: StudioHost, draft: ReturnType
   }
 
   async function selectByRoute(route: RouteLocationNormalized) {
-    const item = findItemFromRoute(tree.value, route, host.meta.i18n)
+    const item = findItemFromRoute(tree.value, route, host.meta.contentRouting)
 
-    if (!item) {
-      return
-    }
-
-    if (item.fsPath === currentItem.value.fsPath) {
+    if (!item || item.fsPath === currentItem.value.fsPath) {
       return
     }
 
