@@ -1,0 +1,1 @@
+import{E as a,V as e,e as i,b as o,c as m,a as s,r}from"./shared-CdpkDwpC.js";export{a as EMOJI_REGEXP,e as VirtualMediaCollectionName,i as emojiList,o as emojiNameToUnicodeMap,m as getEmojiName,s as getEmojiUnicode,r as remarkEmojiPlugin};
